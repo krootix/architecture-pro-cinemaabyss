@@ -2,9 +2,9 @@ name: API Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, cinema ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, cinema ]
   workflow_dispatch:
     inputs:
       environment:
@@ -19,6 +19,12 @@ on:
         description: 'Test folder to run (leave empty for all)'
         required: false
         type: string
+  workflow_call:
+    inputs:
+      environment:
+        required: false
+        type: string
+        default: 'docker'
 
 jobs:
   api-tests:

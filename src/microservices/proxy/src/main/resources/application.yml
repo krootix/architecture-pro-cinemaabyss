@@ -1,0 +1,69 @@
+
+spring:
+  application:
+    name: proxy
+  main:
+    banner-mode: off
+
+  webflux:
+    static-path-pattern: /static/**
+
+
+  cloud:
+    gateway:
+      routes:
+        # Movies routes with traffic splitting
+        - id: movies-v1
+          uri: ${route-properties.monolith}/api/movies
+          predicates:
+            - Path=/api/movies/**
+            - Weight=traffic-split-movies-group, ${traffic-properties.percentage}
+
+        - id: movies-v2
+          uri: ${route-properties.movies}/api/movies
+          predicates:
+            - Path=/api/movies/**
+            - Weight=traffic-split-movies-group, #{100 - ${traffic-properties.percentage}}
+
+        # Events routes with traffic splitting
+        - id: events-v1
+          uri: ${route-properties.monolith}/api/events
+          predicates:
+            - Path=/api/events/**
+            - Weight=traffic-split-events-group, ${traffic-properties.percentage}
+
+        - id: events-v2
+          uri: ${route-properties.events}/api/events
+          predicates:
+            - Path=/api/events/**
+            - Weight=traffic-split-events-group, #{100 - ${traffic-properties.percentage}}
+
+        # Users route (monolith only)
+        - id: users
+          uri: ${route-properties.monolith}/api/users
+          predicates:
+            - Path=/api/users/**
+
+route-properties:
+  monolith: ${MONOLITH_URL:http://monolith:8080}
+  movies: ${MOVIES_SERVICE_URL:http://movies-service:8081}
+  events: ${EVENTS_SERVICE_URL:http://events-service:8082}
+
+traffic-properties:
+  gradualMigration: ${GRADUAL_MIGRATION:true}
+  percentage: ${MOVIES_MIGRATION_PERCENT:10}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      access: unrestricted
+
+server:
+  shutdown: graceful
+  port: 8000
+  address: 0.0.0.0

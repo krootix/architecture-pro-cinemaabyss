@@ -1,0 +1,26 @@
+server:
+  shutdown: graceful
+  port: 8082
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: events
+
+  kafka:
+    bootstrap-servers: "kafka:9092"
+
+app:
+  user_events: user-events
+  movie_events: movie-events
+  payment_events: payment-events
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
