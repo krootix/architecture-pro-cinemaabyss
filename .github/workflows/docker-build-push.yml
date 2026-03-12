@@ -7,12 +7,6 @@ on:
     paths:
       - 'src/**'
       - '.github/workflows/docker-build-push.yml'
-      - 'tests/postman/**'
-  pull_request:
-    branches: [ main, develop, cinema ]
-    paths:
-      - 'src/**'
-      - 'tests/postman/**'
   release:
     types: [published]
 
@@ -24,6 +18,8 @@ env:
   PROXY_SERVICE_IMAGE_NAME: ${{ github.repository }}/proxy-service
 
 jobs:
+# Кажется более правильным проводить build-and-push только после проведения тестов.
+#  Не стал удалять api-tests, но для наглядности добавил сюда этот шаг
   test:
     name: Run API Tests
     uses: ./.github/workflows/api-tests.yml
@@ -138,8 +134,3 @@ jobs:
           labels: ${{ steps.meta-proxy.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: API Tests
-        run: npm api-tests
-
-      
