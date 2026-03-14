@@ -1,4 +1,3 @@
-
 spring:
   application:
     name: proxy
@@ -7,7 +6,6 @@ spring:
 
   webflux:
     static-path-pattern: /static/**
-
 
   cloud:
     gateway:
@@ -25,18 +23,11 @@ spring:
             - Path=/api/movies/**
             - Weight=traffic-split-movies-group, #{100 - ${traffic-properties.percentage}}
 
-        # Events routes with traffic splitting
-        - id: events-v1
-          uri: ${route-properties.monolith}/api/events
-          predicates:
-            - Path=/api/events/**
-            - Weight=traffic-split-events-group, ${traffic-properties.percentage}
-
-        - id: events-v2
+        # Events route (events-service only)
+        - id: events
           uri: ${route-properties.events}/api/events
           predicates:
             - Path=/api/events/**
-            - Weight=traffic-split-events-group, #{100 - ${traffic-properties.percentage}}
 
         # Users route (monolith only)
         - id: users
@@ -51,7 +42,7 @@ route-properties:
 
 traffic-properties:
   gradualMigration: ${GRADUAL_MIGRATION:true}
-  percentage: ${MOVIES_MIGRATION_PERCENT:10}
+  percentage: ${MOVIES_MIGRATION_PERCENT:30}
 
 management:
   endpoints:
