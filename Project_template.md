@@ -5,8 +5,10 @@
 1. Спроектируйте to be архитектуру КиноБездны, разделив всю систему на отдельные домены и организовав интеграционное взаимодействие и единую точку вызова сервисов.
 Результат представьте в виде контейнерной диаграммы в нотации С4.
 Добавьте ссылку на файл в этот шаблон
-[ссылка на файл](ссылка)
 
+[Контейнерная диаграмма в нотации С4. Переход к микросервисам](/diagrams/container/container_now.puml)
+
+[Контейнерная диаграмма в нотации С4. Что должно получиться](/diagrams/container/container_new.puml)
 
 ## Задание 2
 
@@ -67,6 +69,9 @@
  - реализовать CI/CD для сборки прокси сервиса
  - реализовать необходимые конфигурационные файлы для переключения трафика.
 
+![postman_tests.png](tests_pics/postman_tests.png)
+
+![kafka_topics.png](tests_pics/kafka_topics.png)
 
 ### CI/CD
 
@@ -244,6 +249,9 @@ cat .docker/config.json | base64
 
   zookeeper-0                       1/1     Running 
 
+В результате получилось так:
+![kuber_pods](tests_pics/kuber_pods.png)
+
   8. Добавим ingress
 
   - добавьте аддон
@@ -274,6 +282,13 @@ cat .docker/config.json | base64
 #### Шаг 3
 Добавьте сюда скриншота вывода при вызове https://cinemaabyss.example.com/api/movies и  скриншот вывода event-service после вызова тестов.
 
+![created events kubernetes tests](tests_pics/created_events_kubernetes_tests.png)
+
+![events_service kubernetes tests](tests_pics/events_service_kubernetes_tests.png)
+
+![ingress kafka ui kubernetes tests](tests_pics/kafka_log_kubernetes_tests.png)
+
+![api movies](tests_pics/api_movies.png)
 
 ## Задание 4
 Для простоты дальнейшего обновления и развертывания вам как архитектуру необходимо так же реализовать helm-чарты для прокси-сервиса и проверить работу 
@@ -344,10 +359,18 @@ kafka.common.InconsistentClusterIdException: The Cluster ID OkOjGPrdRimp8nkFohYk
 kubectl get pods -n cinemaabyss
 minikube tunnel
 ```
+![minikube tunnel](tests_pics/minikube_tunnel.png)
 
 Потом вызовите 
 https://cinemaabyss.example.com/api/movies
 и приложите скриншот развертывания helm и вывода https://cinemaabyss.example.com/api/movies
+
+![helm list](tests_pics/helm%20list.png)
+
+не прокидывался порт. Помог рестарт
+![restart ingress nginx](tests_pics/restart_ingress_nginx.png)
+
+![helm api movies](tests_pics/helm_api_movies.png)
 
 
 # Задание 5
@@ -371,6 +394,7 @@ kubectl get namespace -L istio-injection
 kubectl apply -f .\src\kubernetes\circuit-breaker-config.yaml -n cinemaabyss
 
 ```
+![circuit-breakers](tests_pics/circuit_breakers.png)
 
 Тестирование
 
@@ -380,6 +404,11 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.25/samp
 ```
 
 # Get the fortio pod name
+
+```power shell
+$FORTIO_POD = kubectl get pod -n cinemaabyss | findstr fortio | ForEach-Object { ($_ -split '\s+')[0] }
+```
+
 ```bash
 FORTIO_POD=$(kubectl get pod -n cinemaabyss | grep fortio | awk '{print $1}')
 
@@ -406,6 +435,10 @@ Code 503 : 399 (79.8 %)
 kubectl exec -n cinemaabyss fortio-deploy-b6757cbbb-7c9qg -c istio-proxy -- pilot-agent request GET stats | grep movies-service | grep pending
 ```
 
+```power shell
+$FORTIO_POD = kubectl get pod -n cinemaabyss | findstr fortio | ForEach-Object { ($_ -split '\s+')[0] }
+```
+
 И там смотрим 
 
 ```bash
@@ -414,6 +447,8 @@ You can see 21 for the upstream_rq_pending_overflow value which means 21 calls s
 ```
 
 Приложите скриншот работы circuit breaker'а
+![fortio](tests_pics/fortio.png)
+![fortio statistics](tests_pics/fortio_statistics.png)
 
 Удаляем все
 ```bash

@@ -1,0 +1,49 @@
+@startuml
+title CinemaAbyss Component Diagram - Complete Microservices Architecture
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "User of the CinemaAbyss platform")
+System_Ext(kafkaCluster, "Kafka Cluster", "Event streaming platform")
+
+Container_Boundary(cinemaabyss, "CinemaAbyss System") {
+  Container(ingress, "Ingress Controller", "NGINX", "External API gateway, routes traffic to proxy-service")
+  Container(proxyService, "Proxy Service (API Gateway)", "Spring Boot", "Central entry point for all microservices")
+  Container(moviesService, "Movies Service", "Go", "Handles movie metadata, ratings, genres")
+  Container(eventsService, "Events Service", "Spring Boot", "Handles event-driven communication via Kafka")
+  Container(userService, "User Service", "Spring Boot", "Handles user registration, authentication, profiles")
+  Container(paymentsService, "Payments Service", "Spring Boot", "Handles payment processing, transactions, invoices")
+  Container(subscriptionsService, "Subscriptions Service", "Spring Boot", "Handles user subscriptions, plans, billing")
+  ContainerDb(moviesDatabase, "Movies Database", "PostgreSQL", "Stores movies metadata")
+  ContainerDb(eventsDatabase, "Events Database", "PostgreSQL", "Stores events data")
+  ContainerDb(userDatabase, "User Database", "PostgreSQL", "Stores user profiles and authentication data")
+  ContainerDb(paymentsDatabase, "Payments Database", "PostgreSQL", "Stores payment transactions and history")
+  ContainerDb(subscriptionsDatabase, "Subscriptions Database", "PostgreSQL", "Stores subscription plans and user subscriptions")
+}
+
+Rel(user, ingress, "HTTP/HTTPS", "HTTPS")
+Rel(ingress, proxyService, "Routes all /api/* traffic", "HTTP")
+
+Rel(proxyService, moviesService, "Routes /api/movies/*", "HTTP")
+Rel(proxyService, userService, "Routes /api/users/*", "HTTP")
+Rel(proxyService, paymentsService, "Routes /api/payments/*", "HTTP")
+Rel(proxyService, subscriptionsService, "Routes /api/subscriptions/*", "HTTP")
+Rel(proxyService, eventsService, "Routes /api/events/*", "HTTP")
+
+Rel(moviesService, moviesDatabase, "Reads/Writes", "JDBC")
+Rel(userService, userDatabase, "Reads/Writes", "JDBC")
+Rel(paymentsService, paymentsDatabase, "Reads/Writes", "JDBC")
+Rel(subscriptionsService, subscriptionsDatabase, "Reads/Writes", "JDBC")
+Rel(eventsService, eventsDatabase, "Reads/Writes", "JDBC")
+
+Rel(moviesService, eventsService, "Publishes movie events", "Kafka")
+Rel(userService, eventsService, "Publishes user events", "Kafka")
+Rel(paymentsService, eventsService, "Publishes payment events", "Kafka")
+Rel(subscriptionsService, eventsService, "Publishes subscription events", "Kafka")
+
+Rel(eventsService, kafkaCluster, "Connects to", "Kafka protocol")
+
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,40 @@
+@startuml
+title CinemaAbyss Component Diagram - Strangler Fig Pattern
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "User of the CinemaAbyss platform")
+System_Ext(kafkaCluster, "Kafka Cluster", "Event streaming platform")
+
+Container_Boundary(cinemaabyss, "CinemaAbyss System") {
+  Container(ingress, "Ingress Controller", "NGINX", "External API gateway, routes traffic to proxy-service")
+  Container(proxyService, "Proxy Service (Strangler Fig Facade)", "Spring Boot", "API Gateway that routes traffic between monolith and microservices with percentage-based splitting")
+  Container(moviesService, "Movies Service", "Go", "Extracted from monolith - handles movie metadata, ratings, genres")
+  Container(eventsService, "Events Service", "Spring Boot", "Handles event-driven communication via Kafka for movies, users and payments")
+  Container(legacyMonolith, "Legacy Monolith", "Go", "Legacy monolith")
+  ContainerDb(moviesDatabase, "Movies Database", "PostgreSQL", "Stores movies metadata")
+  ContainerDb(eventsDatabase, "Events Database", "PostgreSQL", "Stores events data")
+  ContainerDb(monolithDatabase, "Monolith Database", "PostgreSQL", "Stores monolith data")
+}
+
+Rel(user, ingress, "HTTP/HTTPS", "HTTPS")
+
+Rel(ingress, proxyService, "Routes all /api/* traffic", "HTTP")
+
+Rel(proxyService, moviesService, "Routes X% of traffic", "HTTP")
+Rel(proxyService, legacyMonolith, "Routes (100-X)% of traffic", "HTTP")
+Rel(proxyService, eventsService, "Routes events", "HTTP")
+
+Rel(moviesService, moviesDatabase, "Reads/Writes", "JDBC")
+Rel(eventsService, eventsDatabase, "Reads/Writes", "JDBC")
+Rel(legacyMonolith, monolithDatabase, "Reads/Writes", "JDBC")
+
+Rel(moviesService, eventsService, "Publishes movie events", "Kafka")
+Rel(legacyMonolith, eventsService, "Publishes monolith events", "Kafka")
+
+Rel(eventsService, kafkaCluster, "Connects to", "Kafka protocol")
+
+SHOW_LEGEND()
+@enduml

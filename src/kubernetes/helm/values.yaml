@@ -2,7 +2,8 @@
 global:
   namespace: cinemaabyss
   domain: cinemaabyss.example.com
-
+  configMapName: cinemaabyss-config
+  secretName: cinemaabyss-secrets
 # Image pull secrets
 imagePullSecrets:
   dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6ICJhM0p2YjNScGVEcG5hSEJmV2tSSWJWWlBaMlJ5UjFZMmQyMTZZVE00Y2tOeE9VZDVRWFJ6VG5Nek0zaExVbHBCIgoJCX0KCX0sCgkiY3JlZHNTdG9yZSI6ICJkZXNrdG9wIiwKCSJjdXJyZW50Q29udGV4dCI6ICJkZXNrdG9wLWxpbnV4Igp9
@@ -57,6 +58,11 @@ proxyService:
     tag: latest
     pullPolicy: Always
   replicas: 1
+  env:
+    monolithUrl: "http://monolith:8080"
+    moviesServiceUrl: "http://movies-service:8081"
+    eventsServiceUrl: "http://events-service:8082"
+    moviesMigrationPercent: 30
   resources:
     limits:
       cpu: 300m
@@ -139,6 +145,46 @@ kafka:
       partitions: 1
       replicationFactor: 1
 
+kafkaUi:
+  enabled: true
+  replicas: 1
+  image:
+    repository: provectuslabs/kafka-ui
+    tag: latest
+    pullPolicy: Always
+  containerPort: 8080  # Внутренний порт контейнера
+  service:
+    port: 8090         # Внешний порт сервиса
+    type: ClusterIP
+  env:
+    KAFKA_CLUSTERS_0_NAME: "cinemaabyss-kafka"
+    KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+    KAFKA_CLUSTERS_0_ZOOKEEPER: "zookeeper:2181"
+    KAFKA_CLUSTERS_0_READONLY: "false"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  readinessProbe:
+    enabled: true
+    path: /actuator/health  # или /health, в зависимости от образа
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  livenessProbe:
+    enabled: true
+    path: /actuator/health  # или /health
+    initialDelaySeconds: 30
+    periodSeconds: 15
+  ingress:
+    enabled: true
+    className: nginx
+    host: kafka.cinemaabyss.example.com
+    path: /
+    annotations: {}
+
 # Zookeeper configuration
 zookeeper:
   enabled: true
@@ -173,10 +219,22 @@ ingress:
           pathType: Prefix
           service: proxy-service
           port: 80
+        - path: /api/movies
+          pathType: Prefix
+          service: proxy-service
+          port: 80
         - path: /api/events
           pathType: Prefix
-          service: events-service
-          port: 8082
+          service: proxy-service
+          port: 80
+        - path: /api/users
+          pathType: Prefix
+          service: proxy-service
+          port: 80
+        - path: /api/monolith
+          pathType: Prefix
+          service: proxy-service
+          port: 80
 
 # Application configuration
 config:

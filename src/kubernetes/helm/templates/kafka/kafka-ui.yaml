@@ -1,0 +1,75 @@
+{{- if .Values.kafkaUi.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: kafka-ui
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.kafkaUi.replicas }}
+  selector:
+    matchLabels:
+      app: kafka-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-ui
+    spec:
+      containers:
+      - name: kafka-ui
+        image: {{ .Values.kafkaUi.image.repository }}:{{ .Values.kafkaUi.image.tag }}
+        imagePullPolicy: {{ .Values.kafkaUi.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.kafkaUi.containerPort }}
+          name: http
+        env:
+        {{- range $key, $value := .Values.kafkaUi.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        resources:
+          requests:
+            memory: {{ .Values.kafkaUi.resources.requests.memory }}
+            cpu: {{ .Values.kafkaUi.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.kafkaUi.resources.limits.memory }}
+            cpu: {{ .Values.kafkaUi.resources.limits.cpu }}
+        {{- if .Values.kafkaUi.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.kafkaUi.readinessProbe.path }}
+            port: {{ .Values.kafkaUi.containerPort }}
+          initialDelaySeconds: {{ .Values.kafkaUi.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.kafkaUi.readinessProbe.periodSeconds }}
+        {{- end }}
+        {{- if .Values.kafkaUi.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.kafkaUi.livenessProbe.path }}
+            port: {{ .Values.kafkaUi.containerPort }}
+          initialDelaySeconds: {{ .Values.kafkaUi.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.kafkaUi.livenessProbe.periodSeconds }}
+        {{- end }}
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: kafka-ui
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    app: kafka-ui
+  ports:
+    - port: {{ .Values.kafkaUi.service.port }}
+      targetPort: {{ .Values.kafkaUi.containerPort }}
+      name: http
+  type: {{ .Values.kafkaUi.service.type }}
+{{- end }}
