@@ -1,0 +1,30 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: monolith-circuit-breaker
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  host: monolith
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: {{ .Values.istio.monolith.circuitBreaker.tcp.maxConnections }}
+        connectTimeout: {{ .Values.istio.monolith.circuitBreaker.tcp.connectTimeout }}
+      http:
+        http1MaxPendingRequests: {{ .Values.istio.monolith.circuitBreaker.http.http1MaxPendingRequests }}
+        http2MaxRequests: {{ .Values.istio.monolith.circuitBreaker.http.http2MaxRequests }}
+        maxRequestsPerConnection: {{ .Values.istio.monolith.circuitBreaker.http.maxRequestsPerConnection }}
+        maxRetries: {{ .Values.istio.monolith.circuitBreaker.http.maxRetries }}
+    loadBalancer:
+      simple: {{ .Values.istio.monolith.loadBalancer }}
+    outlierDetection:
+      consecutive5xxErrors: {{ .Values.istio.monolith.outlierDetection.consecutive5xxErrors }}
+      interval: {{ .Values.istio.monolith.outlierDetection.interval }}
+      baseEjectionTime: {{ .Values.istio.monolith.outlierDetection.baseEjectionTime }}
+      maxEjectionPercent: {{ .Values.istio.monolith.outlierDetection.maxEjectionPercent }}
+      minHealthPercent: {{ .Values.istio.monolith.outlierDetection.minHealthPercent }}
+{{- end }}

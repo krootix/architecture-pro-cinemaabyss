@@ -1,0 +1,22 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: monolith-vs
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  hosts:
+    - monolith
+  http:
+    - route:
+        - destination:
+            host: monolith
+      retries:
+        attempts: {{ .Values.istio.monolith.retries.attempts }}
+        perTryTimeout: {{ .Values.istio.monolith.retries.perTryTimeout }}
+        retryOn: {{ .Values.istio.monolith.retries.retryOn }}
+      timeout: {{ .Values.istio.monolith.timeout }}
+{{- end }}

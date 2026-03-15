@@ -1,0 +1,22 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: movies-service-vs
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  hosts:
+    - movies-service
+  http:
+    - route:
+        - destination:
+            host: movies-service
+      retries:
+        attempts: {{ .Values.istio.movies.retries.attempts }}
+        perTryTimeout: {{ .Values.istio.movies.retries.perTryTimeout }}
+        retryOn: {{ .Values.istio.movies.retries.retryOn }}
+      timeout: {{ .Values.istio.movies.timeout }}
+{{- end }}

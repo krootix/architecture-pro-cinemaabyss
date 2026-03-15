@@ -1,0 +1,30 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: movies-service-circuit-breaker
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  host: movies-service
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: {{ .Values.istio.movies.circuitBreaker.tcp.maxConnections }}
+        connectTimeout: {{ .Values.istio.movies.circuitBreaker.tcp.connectTimeout }}
+      http:
+        http1MaxPendingRequests: {{ .Values.istio.movies.circuitBreaker.http.http1MaxPendingRequests }}
+        http2MaxRequests: {{ .Values.istio.movies.circuitBreaker.http.http2MaxRequests }}
+        maxRequestsPerConnection: {{ .Values.istio.movies.circuitBreaker.http.maxRequestsPerConnection }}
+        maxRetries: {{ .Values.istio.movies.circuitBreaker.http.maxRetries }}
+    loadBalancer:
+      simple: {{ .Values.istio.movies.loadBalancer }}
+    outlierDetection:
+      consecutive5xxErrors: {{ .Values.istio.movies.outlierDetection.consecutive5xxErrors }}
+      interval: {{ .Values.istio.movies.outlierDetection.interval }}
+      baseEjectionTime: {{ .Values.istio.movies.outlierDetection.baseEjectionTime }}
+      maxEjectionPercent: {{ .Values.istio.movies.outlierDetection.maxEjectionPercent }}
+      minHealthPercent: {{ .Values.istio.movies.outlierDetection.minHealthPercent }}
+{{- end }}
