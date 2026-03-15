@@ -409,6 +409,10 @@ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.25/samp
 $FORTIO_POD = kubectl get pod -n cinemaabyss | findstr fortio | ForEach-Object { ($_ -split '\s+')[0] }
 ```
 
+```power shell
+kubectl exec -n cinemaabyss $FORTIO_POD -c fortio -- fortio load -c 50 -qps 0 -n 500 -loglevel Warning http://movies-service:8081/api/movies
+```
+
 ```bash
 FORTIO_POD=$(kubectl get pod -n cinemaabyss | grep fortio | awk '{print $1}')
 
@@ -456,4 +460,22 @@ istioctl uninstall --purge
 kubectl delete namespace istio-system
 kubectl delete all --all -n cinemaabyss
 kubectl delete namespace cinemaabyss
+```
+
+Перенёс istio в helm и настроил sidecar'ы только для monolith и movies-service.
+Теперь для поднятия должно хватить 3 команд:
+
+Создание namespace заново
+```bash
+kubectl create namespace cinemaabyss
+```
+
+Включение Istio injection для namespace
+```bash
+kubectl label namespace cinemaabyss istio-injection=enabled --overwrite
+```
+
+Установка Helm чарт
+```bash
+helm install cinemaabyss .\src\kubernetes\helm --namespace cinemaabyss
 ```

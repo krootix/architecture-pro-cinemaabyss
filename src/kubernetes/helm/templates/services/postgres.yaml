@@ -17,6 +17,10 @@ spec:
     metadata:
       labels:
         app: postgres
+      annotations:
+        {{- if .Values.database.annotations }}
+          {{- toYaml .Values.database.annotations | nindent 8 }}
+          {{- end }}
     spec:
       containers:
       - name: postgres

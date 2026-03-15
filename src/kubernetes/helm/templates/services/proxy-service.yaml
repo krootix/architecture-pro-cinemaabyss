@@ -22,6 +22,10 @@ spec:
     metadata:
       labels:
         app: proxy-service
+      annotations:
+        {{- if .Values.proxyService.annotations }}
+        {{- toYaml .Values.proxyService.annotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: proxy-service

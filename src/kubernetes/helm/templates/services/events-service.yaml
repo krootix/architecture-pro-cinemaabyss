@@ -22,6 +22,10 @@ spec:
     metadata:
       labels:
         app: events-service
+      annotations:
+        {{- if .Values.eventsService.annotations }}
+        {{- toYaml .Values.eventsService.annotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       - name: events-service

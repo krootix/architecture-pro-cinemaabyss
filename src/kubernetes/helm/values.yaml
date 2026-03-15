@@ -18,6 +18,8 @@ database:
     repository: postgres
     tag: 14
     pullPolicy: IfNotPresent
+  annotations:
+    sidecar.istio.io/inject: "false"
   resources:
     limits:
       cpu: 1000m
@@ -33,6 +35,8 @@ database:
 # Monolith configuration
 monolith:
   enabled: true
+  annotations:
+    sidecar.istio.io/inject: "true"
   image:
     repository: ghcr.io/krootix/architecture-pro-cinemaabyss/monolith
     tag: latest
@@ -53,6 +57,8 @@ monolith:
 # Proxy service configuration
 proxyService:
   enabled: true
+  annotations:
+    sidecar.istio.io/inject: "false"
   image:
     repository: ghcr.io/krootix/architecture-pro-cinemaabyss/proxy-service
     tag: latest
@@ -77,6 +83,8 @@ proxyService:
 
 # Movies service configuration
 moviesService:
+  annotations:
+    sidecar.istio.io/inject: "true"
   enabled: true
   image:
     repository: ghcr.io/krootix/architecture-pro-cinemaabyss/movies-service
@@ -98,6 +106,8 @@ moviesService:
 # Events service configuration
 eventsService:
   enabled: true
+  annotations:
+    sidecar.istio.io/inject: "false"
   image:
     repository: ghcr.io/krootix/architecture-pro-cinemaabyss/events-service
     tag: latest
@@ -118,6 +128,8 @@ eventsService:
 # Kafka configuration
 kafka:
   enabled: true
+  annotations:
+    sidecar.istio.io/inject: "false"
   image:
     repository: wurstmeister/kafka
     tag: 2.13-2.7.0
@@ -147,6 +159,8 @@ kafka:
 
 kafkaUi:
   enabled: true
+  annotations:
+    sidecar.istio.io/inject: "false"
   replicas: 1
   image:
     repository: provectuslabs/kafka-ui
@@ -188,6 +202,8 @@ kafkaUi:
 # Zookeeper configuration
 zookeeper:
   enabled: true
+  annotations:
+    sidecar.istio.io/inject: "false"
   image:
     repository: wurstmeister/zookeeper
     tag: latest
@@ -235,6 +251,54 @@ ingress:
           pathType: Prefix
           service: proxy-service
           port: 80
+
+istio:
+  enabled: true
+  movies:
+    loadBalancer: "LEAST_REQUEST"
+    timeout: 10s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: "5xx,connect-failure,refused-stream"
+    circuitBreaker:
+      tcp:
+        maxConnections: 15
+        connectTimeout: 20ms
+      http:
+        http1MaxPendingRequests: 8
+        http2MaxRequests: 15
+        maxRequestsPerConnection: 10
+        maxRetries: 5
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 20s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 60
+      minHealthPercent: 40
+
+  monolith:
+    loadBalancer: "ROUND_ROBIN"
+    timeout: 15s
+    retries:
+      attempts: 3
+      perTryTimeout: 3s
+      retryOn: "5xx,connect-failure,refused-stream"
+    circuitBreaker:
+      tcp:
+        maxConnections: 10
+        connectTimeout: 30ms
+      http:
+        http1MaxPendingRequests: 5
+        http2MaxRequests: 10
+        maxRequestsPerConnection: 5
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
 
 # Application configuration
 config:

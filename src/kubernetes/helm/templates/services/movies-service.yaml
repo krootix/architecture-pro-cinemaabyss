@@ -22,6 +22,10 @@ spec:
     metadata:
       labels:
         app: movies-service
+      annotations:
+        {{- if .Values.moviesService.annotations }}
+        {{- toYaml .Values.moviesService.annotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       - name: movies-service

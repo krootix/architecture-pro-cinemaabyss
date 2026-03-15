@@ -17,6 +17,10 @@ spec:
     metadata:
       labels:
         app: kafka-ui
+      annotations:
+        {{- if .Values.kafkaUi.annotations }}
+        {{- toYaml .Values.kafkaUi.annotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       - name: kafka-ui

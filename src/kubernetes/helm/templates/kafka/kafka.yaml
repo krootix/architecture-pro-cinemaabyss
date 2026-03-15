@@ -57,6 +57,10 @@ spec:
     metadata:
       labels:
         app: zookeeper
+      annotations:
+        {{- if .Values.zookeeper.annotations }}
+        {{- toYaml .Values.zookeeper.annotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       - name: zookeeper
@@ -153,6 +157,10 @@ spec:
     metadata:
       labels:
         app: kafka
+      annotations:
+        {{- if .Values.kafka.annotations }}
+        {{- toYaml .Values.kafka.annotations | nindent 8 }}
+        {{- end }}
     spec:
       containers:
       - name: kafka
